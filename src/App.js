@@ -4,118 +4,89 @@ import axios from 'axios';
 import ShirtListPage from './components/ShirtListPage'
 
 
-const testShirts = [
-  {
-    color: [
-      "grey"
-    ],
-    id: "919865f33813410ce76c",
-    manufacturer: "nouke",
-    name: "WERHUNK LIGHT",
-    price: 47,
-    type: "shirts"
-  },
-  {
-    color: [
-      "grey"
-    ],
-    id: "919865f33813410ce761",
-    manufacturer: "nouke",
-    name: "WERHUNK LIGHT",
-    price: 47,
-    type: "shirts"
-  },
-  {
-    color: [
-      "grey"
-    ],
-    id: "919865f33813410ce762",
-    manufacturer: "nouke",
-    name: "WERHUNK LIGHT",
-    price: 47,
-    type: "shirts"
-  }
-];
-
-
-const getUniqueManufacturers = (products) => {
-  return [...new Set(products.map(product => product.manufacturer))];
-}
-
-
-
 const App = (props) => {
   const [shirts, setShirts] = useState([]);
-  const [shirtManufacturers, setShirtManufacturers] = useState([]);
-
   const [jackets, setJackets] = useState([]);
-  const [jacketManufactures, setJacketManufacturers] = useState([]);
 
 
-  const prepareAvailibilityPayload = (payload) => {
-    var output = payload.replace('<AVAILABILITY>', '');
-    output = output.replace('</AVAILABILITY>', '');
-    output = output.replace('<INSTOCKVALUE>', '');
-    output = output.replace('</INSTOCKVALUE>', '');
-    output = output.trim();
-    return output;
-  }
+  useEffect(() => {
 
+    const getUniqueManufacturers = (products) => {
+      return [...new Set(products.map(product => product.manufacturer))];
+    }
+       
+    const prepareAvailibilityPayload = (payload) => {
+      var output = payload.replace('<AVAILABILITY>', '');
+      output = output.replace('</AVAILABILITY>', '');
+      output = output.replace('<INSTOCKVALUE>', '');
+      output = output.replace('</INSTOCKVALUE>', '');
+      output = output.trim();
+      return output;
+    }
 
-  const updateProductWithAvailability = (products, manufacturers) => {
-    manufacturers.forEach(manufacturer => {
-      console.log(manufacturer);
+    const appendShirtsToState = (moreShirts) => {
+      setShirts(shirts.concat(moreShirts));
+    }
+
+    const updateProductWithAvailability = (products, manufacturers, appendFunction) => {
+      manufacturers.forEach(manufacturer => {
+        console.log(manufacturer);
+        axios
+          .get(`https://bad-api-assignment.reaktor.com/availability/${manufacturer}`)
+          .then(response => {
+            console.log('get availability promise fulfilled');
+            console.log(response);
+
+            var values = response.data.response;
+            var valueMap = values.reduce((map, obj) => {
+              map[obj.id.toLowerCase()] = obj;
+              return map;
+            }, {});
+            console.log(valueMap)
+
+            const newProducts = products.map(product => {
+              return {
+                ...product,
+                availability: (valueMap[product.id])
+                  ? prepareAvailibilityPayload(valueMap[product.id].DATAPAYLOAD)
+                  : "UNLISTED"
+              }
+            });
+
+            appendFunction(newProducts);
+          }).catch(error => {
+            console.log(error);
+          });
+      });
+    }
+
+    const fetchProducts = (infoString, urlString, appendCallback) => {
+      console.log(infoString);
       axios
-        .get(`https://bad-api-assignment.reaktor.com/availability/${manufacturer}`)
+        .get(urlString)
         .then(response => {
-          console.log('get availability promise fulfilled');
+          console.log(`${infoString} promise fulfilled`);
           console.log(response);
 
-          var values = response.data.response;
+          var products = response.data;
+          const manufacturers = getUniqueManufacturers(products);
+          updateProductWithAvailability(products, manufacturers, appendCallback)
 
-          var valueMap = values.reduce((map, obj) => {
-            map[obj.id.toLowerCase()] = obj;
-            return map;
-          }, {});
-
-          console.log(valueMap)
-
-          const newProducts = products.map(product => {
-            return {
-              ...product,
-              availability: (valueMap[product.id])
-                ? prepareAvailibilityPayload(valueMap[product.id].DATAPAYLOAD)
-                : "UNLISTED"
-            }
-          });
-
-          setShirts(shirts.concat(newProducts));
         }).catch(error => {
           console.log(error);
         });
-    });
-  }
 
-  useEffect(() => {
-    console.log('Fetching shirts');
-    axios
-      .get('https://bad-api-assignment.reaktor.com/products/shirts')
-      .then(response => {
-        console.log('get shirts promise fulfilled');
-        console.log(response);
+    }
 
+    setShirts([]);
+    setJackets([]);
 
-        var products = response.data;
-        const manufacturers = getUniqueManufacturers(products);
-        updateProductWithAvailability(products, manufacturers)
+    fetchProducts(
+      'Fetching shirts',
+      'https://bad-api-assignment.reaktor.com/products/shirts',
+      appendShirtsToState
+    );
 
-        // setShirts(response.data);
-        setShirtManufacturers(manufacturers);
-      }).catch(error => {
-        console.log(error);
-      }).finally(() => {
-
-      });
 
     // console.log('Fetching jackets');
     // axios
