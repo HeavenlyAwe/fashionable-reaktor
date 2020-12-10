@@ -5,6 +5,9 @@ import ShirtPage from './ShirtPage';
 
 const ShirtListPage = ({ shirts }) => {
 
+  console.log(shirts.length)
+
+
   const shirtList = shirts.map(shirt => {
     return (
       <li
@@ -18,10 +21,14 @@ const ShirtListPage = ({ shirts }) => {
   return (
     <div>
       <h2>Shirt List Page</h2>
-      Content Coming Soon
-      <ul>
-        {shirtList}
-      </ul>
+      {
+        (shirtList.length === 0)
+          ? "Content coming soon"
+          :
+          <ul>
+            {shirtList}
+          </ul>
+      }
     </div>
   )
 }
