@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import ProductPage from './ProductPage';
 
@@ -26,6 +27,12 @@ const ProductListPage = ({ titleText, products }) => {
       }
     </div>
   )
+}
+
+
+ProductListPage.propTypes = {
+  titleText: PropTypes.string.isRequired,
+  products: PropTypes.array.isRequired,
 }
 
 
