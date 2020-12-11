@@ -16,7 +16,7 @@ const AccessoryListPage = ({ accessories }) => {
 
   return (
     <div>
-      <h2>Shirt List Page</h2>
+      <h2>Accessory List Page</h2>
       {
         (accessoryList.length === 0)
           ? 'Content coming soon'
