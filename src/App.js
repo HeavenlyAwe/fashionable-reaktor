@@ -21,11 +21,7 @@ const App = (props) => {
 
     const fetchProducts = (urlString, setProductsFunction) => {
       axios
-        .get(urlString, {
-          // headers: {
-          //   'x-force-error-mode': 'all'
-          // }
-        })
+        .get(urlString)
         .then(response => {
           var products = response.data;
           products = products.map(product => {
@@ -34,8 +30,6 @@ const App = (props) => {
               availability: "[Waiting for update]",
             }
           })
-          // const manufacturers = getUniqueManufacturers(products);
-          // updateProductWithAvailability(products, manufacturers, setFunction)
           setProductsFunction(products);
         }).catch(error => {
           console.log(error);
@@ -96,7 +90,7 @@ const App = (props) => {
 
       const { shirts, jackets, accessories } = products;
 
-      // Use maps to have fast access to the underling object
+      // Use maps to have fast access to the underlying object when updating availability
       var shirtMap = productListToMap(shirts);
       var jacketMap = productListToMap(jackets);
       var accessoryMap = productListToMap(accessories);
@@ -179,6 +173,54 @@ const App = (props) => {
   }
 
 
+  // Rendering functions here below
+
+  const renderLoadingInformation = () => {
+    return (
+      <div className="loading-wrapper">
+        <div>
+          {
+            (shirts.length > 0)
+              ? <span className="loading-done">Shirts loaded</span>
+              : <span className="loading-progress">Loading shirts</span>
+          }
+        </div>
+        <div>
+          {
+            (jackets.length > 0)
+              ? <span className="loading-done">Jackets loaded</span>
+              : <span className="loading-progress">Loading jackets</span>
+          }
+        </div>
+        <div>
+          {
+            (accessories.length > 0)
+              ? <span className="loading-done">Accessories loaded</span>
+              : <span className="loading-progress">Loading accessories</span>
+          }
+        </div>
+        <div>
+          {
+            (loadingProgress.progress >= loadingProgress.maxProgress)
+              ? <span className="loading-done">Everything loaded</span>
+              : <span className="loading-progress">Loading availability data: {loadingProgress.progress / loadingProgress.maxProgress * 100} %</span>
+          }
+        </div>
+        <button onClick={() => { setUpdateAvailability(true) }}>Reload Availability</button>
+      </div>
+    );
+  }
+
+  const renderCategoryMenu = () => {
+    return (
+      <div className="topnav">
+        <div onClick={() => { setCurrentTabIndex(0) }}>Shirts</div>
+        <div onClick={() => { setCurrentTabIndex(1) }}>Jackets</div>
+        <div onClick={() => { setCurrentTabIndex(2) }}>Accessories</div>
+      </div>
+    );
+  }
+
   const renderTabs = () => {
     switch (currentTabIndex) {
       case 0:
@@ -192,45 +234,12 @@ const App = (props) => {
     }
   }
 
+  // Render the main component
   return (
     <div className="App">
       <header className="App-header">
-        <div className="loading-wrapper">
-          <div>
-            {
-              (shirts.length > 0)
-                ? <span className="loading-done">Shirts loaded</span>
-                : <span className="loading-progress">Loading shirts</span>
-            }
-          </div>
-          <div>
-            {
-            (jackets.length > 0)
-              ? <span className="loading-done">Jackets loaded</span>
-              : <span className="loading-progress">Loading jackets</span>
-              }
-          </div>
-          <div>
-            {
-            (accessories.length > 0)
-              ? <span className="loading-done">Accessories loaded</span>
-              : <span className="loading-progress">Loading accessories</span>
-              }
-          </div>
-          <div>
-            {
-            (loadingProgress.progress >= loadingProgress.maxProgress)
-              ? <span className="loading-done">Everything loaded</span>
-              : <span className="loading-progress">Loading availability data: {loadingProgress.progress / loadingProgress.maxProgress * 100} %</span>
-              }
-          </div>
-          <button onClick={() => { setUpdateAvailability(true) }}>Reload Availability</button>
-        </div>
-        <div className="topnav">
-          <div onClick={() => { setCurrentTabIndex(0) }}>Shirts</div>
-          <div onClick={() => { setCurrentTabIndex(1) }}>Jackets</div>
-          <div onClick={() => { setCurrentTabIndex(2) }}>Accessories</div>
-        </div>
+        {renderLoadingInformation()}
+        {renderCategoryMenu()}
       </header>
       <div>
         {renderTabs()}
