@@ -20,59 +20,6 @@ const App = (props) => {
 
   useEffect(() => {
 
-    // const getUniqueManufacturers = (products) => {
-    //   return [...new Set(products.map(product => product.manufacturer))];
-    // }
-
-    // const prepareAvailibilityPayload = (payload) => {
-    //   var output = payload.replace('<AVAILABILITY>', '');
-    //   output = output.replace('</AVAILABILITY>', '');
-    //   output = output.replace('<INSTOCKVALUE>', '');
-    //   output = output.replace('</INSTOCKVALUE>', '');
-    //   output = output.trim();
-    //   return output;
-    // }
-
-    // const updateProductWithAvailability = (products, manufacturers, setFunction) => {
-    //   console.log("Start manufacturer loop");
-    //   manufacturers.forEach(manufacturer => {
-    //     console.log(manufacturer);
-    //     axios
-    //       .get(`https://bad-api-assignment.reaktor.com/availability/${manufacturer}`)
-    //       .then(response => {
-    //         console.log('get availability promise fulfilled');
-    //         // console.log(response);
-
-    //         var values = response.data.response;
-
-    //         // Don't process the response it is empty
-    //         if (values.length === 0) {
-    //           return;
-    //         }
-
-    //         var valueMap = values.reduce((map, obj) => {
-    //           map[obj.id.toLowerCase()] = obj;
-    //           return map;
-    //         }, {});
-
-    //         const newProducts = products.map(product => {
-    //           return {
-    //             ...product,
-    //             availability: (product.manufacturer === manufacturer && valueMap[product.id])
-    //               ? prepareAvailibilityPayload(valueMap[product.id].DATAPAYLOAD)
-    //               : product.availability
-    //           }
-    //         });
-
-    //         setFunction(newProducts);
-
-    //       }).catch(error => {
-    //         console.log(error);
-    //       });
-    //   });
-    //   console.log("End manufacturer loop");
-    // }
-
     const fetchProducts = (infoString, urlString, setProductsFunction, setDoneFunction) => {
       console.log(infoString);
       axios
@@ -96,10 +43,6 @@ const App = (props) => {
           console.log(error);
         });
     }
-
-    // setShirts([]);
-    // setJackets([]);
-    // setAccessories([]);
 
     fetchProducts(
       'Fetching shirts',
@@ -151,34 +94,43 @@ const App = (props) => {
       return output;
     }
 
-    const updateProductWithAvailability = (products, manufacturers, setFunction) => {
-      console.log("Start manufacturer loop");
+    const productListToMap = (products) => {
+      return products.reduce((map, obj) => {
+        map[obj.id.toLowerCase()] = obj;
+        return map;
+      }, {});
+    };
+
+    const updateProductAvailability = (products, manufacturers, setFunction) => {
+
+      var productMap = productListToMap(products);
+
       manufacturers.forEach(manufacturer => {
-        console.log(manufacturer);
         axios
           .get(`https://bad-api-assignment.reaktor.com/availability/${manufacturer}`)
           .then(response => {
             console.log('get availability promise fulfilled');
-            // console.log(response);
 
             var values = response.data.response;
 
-            // Don't process the response it is empty
+            // Don't process the response if it is empty
             if (values.length === 0) {
               return;
             }
 
-            var valueMap = values.reduce((map, obj) => {
-              map[obj.id.toLowerCase()] = obj;
-              return map;
-            }, {});
+            values.forEach(value => {
+              const id = value.id.toLowerCase();
+              const payload = prepareAvailibilityPayload(value.DATAPAYLOAD);
 
-            const newProducts = products.map(product => {
-              return {
-                ...product,
-                availability: (product.manufacturer === manufacturer && valueMap[product.id])
-                  ? prepareAvailibilityPayload(valueMap[product.id].DATAPAYLOAD)
-                  : product.availability
+              if (productMap[id]) {
+                productMap[id].availability = payload;
+              }
+            })
+
+            let newProducts = [...products];
+            newProducts.forEach(product => {
+              if (productMap[product.id].availability !== '[Waiting for update]') {
+                product.availability = productMap[product.id].availability
               }
             });
 
@@ -188,19 +140,23 @@ const App = (props) => {
             console.log(error);
           });
       });
-      console.log("End manufacturer loop");
     }
 
     if (updateAvailability) {
       console.log("Update availability")
-
+      const products = shirts.concat(jackets, accessories);
+      const manufacturers = getUniqueManufacturers(products);
+      console.log(manufacturers);
+      
+      updateProductAvailability(shirts, manufacturers, setShirts);
+      updateProductAvailability(jackets, manufacturers, setJackets);
+      updateProductAvailability(accessories, manufacturers, setAccessories);
     }
 
   }, [updateAvailability]);
 
 
-  console.log(shirts.length);
-
+  // Synchronize the data loading to access the "availability API" just once
   if (doneLoadingShirts && doneLoadingJackets && doneLoadingAccessories && !updateAvailability) {
     setUpdateAvailability(true);
   }
