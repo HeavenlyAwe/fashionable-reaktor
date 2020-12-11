@@ -3,19 +3,23 @@ import axios from 'axios';
 
 import ShirtListPage from './components/ShirtListPage'
 import JacketListPage from './components/JacketListPage';
+import AccessoryListPage from './components/AccessoryListPage';
 
 
 const App = (props) => {
   const [shirts, setShirts] = useState([]);
-  const [doneLoadingShirts, setDoneLoadingShirts] = useState(false);
-
   const [jackets, setJackets] = useState([]);
-  const [doneLoadingJackets, setDoneLoadingJackets] = useState(false);
-
   const [accessories, setAccessories] = useState([]);
+
+  const [doneLoadingShirts, setDoneLoadingShirts] = useState(false);
+  const [doneLoadingJackets, setDoneLoadingJackets] = useState(false);
   const [doneLoadingAccessories, setDoneLoadingAccessories] = useState(false);
 
   const [updateAvailability, setUpdateAvailability] = useState(false);
+  const [doneLoading, setDoneLoading] = useState(false);
+
+  const [maxLoadingCounter, setMaxLoadingCounter] = useState(1);
+  const [loadingCounter, setLoadingCounter] = useState(0);
 
   const [currentTabIndex, setCurrentTabIndex] = useState(0);
 
@@ -137,6 +141,7 @@ const App = (props) => {
             });
 
             setFunction(newProducts);
+            setLoadingCounter(prev => prev += 1);
 
           }).catch(error => {
             console.log(error);
@@ -150,12 +155,24 @@ const App = (props) => {
       const manufacturers = getUniqueManufacturers(products);
       console.log(manufacturers);
 
+      setMaxLoadingCounter(manufacturers.length * 3);
+
       updateProductAvailability(shirts, manufacturers, setShirts);
       updateProductAvailability(jackets, manufacturers, setJackets);
       updateProductAvailability(accessories, manufacturers, setAccessories);
     }
 
   }, [updateAvailability]);
+
+
+  // Check if the "updateProductAvailability" function has applied all the
+  // availability data to the products.
+  //    3 comes from the three calls to the function.
+  if (loadingCounter === maxLoadingCounter) {
+    setDoneLoading(true);
+    setLoadingCounter(0);
+    setMaxLoadingCounter(1);
+  }
 
 
   // Synchronize the data loading to access the "availability API" just once
@@ -170,7 +187,7 @@ const App = (props) => {
     } else if (currentTabIndex === 1) {
       return <JacketListPage jackets={jackets} />
     } else {
-      return null;
+      return <AccessoryListPage accessories={accessories} />;
     }
   }
 
@@ -186,6 +203,9 @@ const App = (props) => {
         </div>
         <div>
           {(doneLoadingAccessories) ? "Accessories loaded" : "Loading accessories"}
+        </div>
+        <div>
+          {(doneLoading) ? "Everything loaded" : `Loading availability data: ${loadingCounter / maxLoadingCounter * 100} %`}
         </div>
         <div>
           <button onClick={() => { setCurrentTabIndex(0) }}>Shirts</button>
