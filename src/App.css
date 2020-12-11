@@ -2,7 +2,40 @@ li {
   margin: 0 0 15px 0;
 }
 
+.product-page-container {
+  margin: 10px 10px 10px 10px;
+}
 
 .product-id {
   color: gray;
+}
+
+
+.pagination {
+  display: flex;
+  /* justify-content: space-between; */
+  list-style: none;
+  cursor: pointer;
+  width: 500px;
+}
+
+.pagination a {
+  padding: 5px 5px 5px 5px;
+  border-radius: 0px;
+  border: 1px solid #000000;
+  color: #000000;
+}
+
+.pagination__link {
+  font-weight: bold;
+}
+
+.pagination__link--active a {
+  color: #fff;
+  background: #6c7ac9;
+}
+
+.pagination__link--disabled a {
+  color: rgb(198, 197, 202);
+  border: 1px solid rgb(198, 197, 202);
 }

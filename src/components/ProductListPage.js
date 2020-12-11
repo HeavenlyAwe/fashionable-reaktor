@@ -1,32 +1,66 @@
-import React from 'react';
+import React, { useState } from 'react';
+import ReactPaginate from 'react-paginate';
 import PropTypes from 'prop-types';
 
 import ProductPage from './ProductPage';
 
 
 const ProductListPage = ({ titleText, products }) => {
-  const productList = products.map(product => {
+
+  const [currentPage, setCurrentPage] = useState(0);
+
+  const PER_PAGE = 10;
+  const offset = currentPage * PER_PAGE;
+
+  const currentPageData = products.slice(offset, offset + PER_PAGE);
+  const pageCount = Math.ceil(products.length / PER_PAGE);
+
+
+  const productList = currentPageData.map(product => {
     return (
-      <li
+      <div className=".product-page-container"
         key={product.id}
       >
         <ProductPage product={product} />
-      </li>
+      </div>
     )
   })
 
+
+  // return (
+  //   <div>
+  //     <h2>{titleText}</h2>
+  //     {
+  //       (productList.length === 0)
+  //         ? 'Content coming soon'
+  //         : <ul style={{ listStyleType: "none" }}>
+  //           {productList}
+  //         </ul>
+  //     }
+  //   </div>
+  // )
+
+  const handlePageClick = ({selected: selectedPage}) => {
+    setCurrentPage(selectedPage);
+  }
+
   return (
-    <div>
+    <div className="App">
       <h2>{titleText}</h2>
-      {
-        (productList.length === 0)
-          ? 'Content coming soon'
-          : <ul style={{listStyleType:"none"}}>
-            {productList}
-          </ul>
-      }
+      <ReactPaginate
+        previousLabel={"← Previous"}
+        nextLabel={"Next →"}
+        pageCount={pageCount}
+        onPageChange={handlePageClick}
+        containerClassName={"pagination"}
+        previousLinkClassName={"pagination__link"}
+        nextLinkClassName={"pagination__link"}
+        disabledClassName={"pagination__link--disabled"}
+        activeClassName={"pagination__link--active"}
+      />
+      {productList}
     </div>
-  )
+  );
 }
 
 
