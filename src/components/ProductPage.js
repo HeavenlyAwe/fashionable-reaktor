@@ -1,8 +1,8 @@
 import React from 'react';
 
 
-const JacketPage = ({ jacket }) => {
-  const { id, name, color, manufacturer, price, type, availability } = jacket;
+const ProductPage = ({ product }) => {
+  const { id, name, color, manufacturer, price, type, availability } = product;
   const colors = color.join(' ');
 
   return (
@@ -15,8 +15,8 @@ const JacketPage = ({ jacket }) => {
       <div>TYPE: {type}</div>
       <div>AVAILABILITY: {availability}</div>
     </div>
-  )
+  );
 }
 
 
-export default JacketPage;
+export default ProductPage

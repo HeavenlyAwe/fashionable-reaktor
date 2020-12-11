@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-import ShirtListPage from './components/ShirtListPage'
-import JacketListPage from './components/JacketListPage';
-import AccessoryListPage from './components/AccessoryListPage';
+import ProductListPage from './components/ProductListPage';
 
 
 const App = (props) => {
@@ -29,7 +27,11 @@ const App = (props) => {
     const fetchProducts = (infoString, urlString, setProductsFunction, setDoneFunction) => {
       console.log(infoString);
       axios
-        .get(urlString)
+        .get(urlString, {
+          headers: {
+            'x-force-error-mode': 'all'
+          }
+        })
         .then(response => {
           console.log(`${infoString} promise fulfilled`);
           console.log(response);
@@ -66,7 +68,7 @@ const App = (props) => {
 
     fetchProducts(
       'Fetching accessories',
-      'https://bad-api-assignment.reaktor.com/products/shirts',
+      'https://bad-api-assignment.reaktor.com/products/accessories',
       setAccessories,
       setDoneLoadingAccessories,
     )
@@ -118,7 +120,7 @@ const App = (props) => {
     }
 
 
-    const updateProductAvailability = (products, manufacturers, setFunction) => {
+    const updateProductAvailability = (products, manufacturers) => {
 
       const { shirts, jackets, accessories } = products;
 
@@ -127,33 +129,39 @@ const App = (props) => {
       var accessoryMap = productListToMap(accessories);
 
       manufacturers.forEach(manufacturer => {
+        console.log(manufacturer);
         axios
-          .get(`https://bad-api-assignment.reaktor.com/availability/${manufacturer}`)
+          .get(`https://bad-api-assignment.reaktor.com/availability/${manufacturer}`, {
+            // headers: {
+            //   'x-force-error-mode': 'all'
+            // }
+          })
           .then(response => {
-            console.log('get availability promise fulfilled');
+            console.log('get availability promise fulfilled', response);
 
             var values = response.data.response;
 
             // Don't process the response if it is empty
-            if (values === undefined || values.length === 0) {
-              setLoadingCounter(prev => prev + 1)
-              return;
+            if (values === undefined || values.length === 0 || values === '[]') {
+              [shirtMap, jacketMap, accessoryMap].forEach(m => {
+                Object.keys(m).forEach(key => {
+                  if (m[key].manufacturer === manufacturer) {
+                    m[key].availability = 'Failed to load the availibility data, try again later!'; // TODO: Requeue the loading of this manufacturer!
+                  }
+                });
+              });
+            } else {
+              values.forEach(value => {
+                const id = value.id.toLowerCase();
+                const payload = prepareAvailibilityPayload(value.DATAPAYLOAD);
+
+                [shirtMap, jacketMap, accessoryMap].forEach(m => {
+                  if (m[id]) {
+                    m[id].availability = payload;
+                  }
+                });
+              })
             }
-
-            values.forEach(value => {
-              const id = value.id.toLowerCase();
-              const payload = prepareAvailibilityPayload(value.DATAPAYLOAD);
-
-              if (shirtMap[id]) {
-                shirtMap[id].availability = payload;
-              }
-              if (jacketMap[id]) {
-                jacketMap[id].availability = payload;
-              }
-              if (accessoryMap[id]) {
-                accessoryMap[id].availability = payload;
-              }
-            })
 
             updateProductState(shirtMap, shirts, setShirts);
             updateProductState(jacketMap, jackets, setJackets);
@@ -163,6 +171,8 @@ const App = (props) => {
 
           }).catch(error => {
             console.log(error);
+          }).finally(() => {
+            console.log("Done: ", manufacturer);
           });
       });
     }
@@ -174,8 +184,7 @@ const App = (props) => {
       console.log(manufacturers);
 
       setMaxLoadingCounter(manufacturers.length);
-
-      updateProductAvailability({ shirts, jackets, accessories }, manufacturers, setShirts);
+      updateProductAvailability({ shirts, jackets, accessories }, manufacturers);
     }
 
   }, [updateAvailability]);
@@ -199,11 +208,11 @@ const App = (props) => {
 
   const renderTabs = () => {
     if (currentTabIndex === 0) {
-      return <ShirtListPage shirts={shirts} />
+      return <ProductListPage titleText="Shirt list page" products={shirts} />
     } else if (currentTabIndex === 1) {
-      return <JacketListPage jackets={jackets} />
+      return <ProductListPage titleText="Jacket list page" products={jackets} />
     } else {
-      return <AccessoryListPage accessories={accessories} />;
+      return <ProductListPage titleText="Accessory list page" products={accessories} />
     }
   }
 
