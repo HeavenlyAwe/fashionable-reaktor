@@ -117,7 +117,7 @@ const App = (props) => {
               [shirtMap, jacketMap, accessoryMap].forEach(m => {
                 Object.keys(m).forEach(key => {
                   if (m[key].manufacturer === manufacturer) {
-                    m[key].availability = 'Failed to load the availibility data, try again later!'; // TODO: Requeue the loading of this manufacturer!
+                    m[key].availability = 'Failed to load the availibility data, please try again!'; // TODO: Requeue the loading of this manufacturer!
                   }
                 });
               });
@@ -185,30 +185,47 @@ const App = (props) => {
   return (
     <div className="App">
       <header className="App-header">
-        Software for accessing product and availability info.
-        <div>
-          {(shirts.length > 0) ? "Shirts loaded" : "Loading shirts"}
-        </div>
-        <div>
-          {(jackets.length > 0) ? "Jackets loaded" : "Loading jackets"}
-        </div>
-        <div>
-          {(accessories.length > 0) ? "Accessories loaded" : "Loading accessories"}
-        </div>
-        <div>
-          {(loadingProgress.progress >= loadingProgress.maxProgress) ? "Everything loaded" : `Loading availability data: ${loadingProgress.progress / loadingProgress.maxProgress * 100} %`}
-        </div>
-        <div>
-          <button onClick={() => { setCurrentTabIndex(0) }}>Shirts</button>
-          <button onClick={() => { setCurrentTabIndex(1) }}>Jackets</button>
-          <button onClick={() => { setCurrentTabIndex(2) }}>Accessories</button>
+        <div className="loading-wrapper">
+          <div>
+            {
+              (shirts.length > 0)
+                ? <span className="loading-done">Shirts loaded</span>
+                : <span className="loading-progress">Loading shirts</span>
+            }
+          </div>
+          <div>
+            {
+            (jackets.length > 0)
+              ? <span className="loading-done">Jackets loaded</span>
+              : <span className="loading-progress">Loading jackets</span>
+              }
+          </div>
+          <div>
+            {
+            (accessories.length > 0)
+              ? <span className="loading-done">Accessories loaded</span>
+              : <span className="loading-progress">Loading accessories</span>
+              }
+          </div>
+          <div>
+            {
+            (loadingProgress.progress >= loadingProgress.maxProgress)
+              ? <span className="loading-done">Everything loaded</span>
+              : <span className="loading-progress">Loading availability data: {loadingProgress.progress / loadingProgress.maxProgress * 100} %</span>
+              }
+          </div>
           <button onClick={() => { setUpdateAvailability(true) }}>Reload Availability</button>
+        </div>
+        <div className="topnav">
+          <div onClick={() => { setCurrentTabIndex(0) }}>Shirts</div>
+          <div onClick={() => { setCurrentTabIndex(1) }}>Jackets</div>
+          <div onClick={() => { setCurrentTabIndex(2) }}>Accessories</div>
         </div>
       </header>
       <div>
         {renderTabs()}
       </div>
-    </div>
+    </div >
   );
 }
 
