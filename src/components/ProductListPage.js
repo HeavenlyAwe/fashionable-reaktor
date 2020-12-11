@@ -20,7 +20,7 @@ const ProductListPage = ({ titleText, products }) => {
       {
         (productList.length === 0)
           ? 'Content coming soon'
-          : <ul>
+          : <ul style={{listStyleType:"none"}}>
             {productList}
           </ul>
       }
