@@ -17,6 +17,8 @@ const App = (props) => {
 
   const [updateAvailability, setUpdateAvailability] = useState(false);
 
+  const [currentTabIndex, setCurrentTabIndex] = useState(0);
+
 
   useEffect(() => {
 
@@ -147,7 +149,7 @@ const App = (props) => {
       const products = shirts.concat(jackets, accessories);
       const manufacturers = getUniqueManufacturers(products);
       console.log(manufacturers);
-      
+
       updateProductAvailability(shirts, manufacturers, setShirts);
       updateProductAvailability(jackets, manufacturers, setJackets);
       updateProductAvailability(accessories, manufacturers, setAccessories);
@@ -159,6 +161,17 @@ const App = (props) => {
   // Synchronize the data loading to access the "availability API" just once
   if (doneLoadingShirts && doneLoadingJackets && doneLoadingAccessories && !updateAvailability) {
     setUpdateAvailability(true);
+  }
+
+
+  const renderTabs = () => {
+    if (currentTabIndex === 0) {
+      return <ShirtListPage shirts={shirts} />
+    } else if (currentTabIndex === 1) {
+      return <JacketListPage jackets={jackets} />
+    } else {
+      return null;
+    }
   }
 
   return (
@@ -174,10 +187,14 @@ const App = (props) => {
         <div>
           {(doneLoadingAccessories) ? "Accessories loaded" : "Loading accessories"}
         </div>
+        <div>
+          <button onClick={() => { setCurrentTabIndex(0) }}>Shirts</button>
+          <button onClick={() => { setCurrentTabIndex(1) }}>Jackets</button>
+          <button onClick={() => { setCurrentTabIndex(2) }}>Accessories</button>
+        </div>
       </header>
       <div>
-        <ShirtListPage shirts={shirts} />
-        {/* <JacketListPage jackets={jackets} /> */}
+        {renderTabs()}
       </div>
     </div>
   );
