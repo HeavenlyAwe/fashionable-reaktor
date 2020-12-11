@@ -107,9 +107,24 @@ const App = (props) => {
       }, {});
     };
 
+    const updateProductState = (productMap, products, setFunction) => {
+      let newProducts = [...products];
+      newProducts.forEach(product => {
+        if (productMap[product.id].availability !== '[Waiting for update]') {
+          product.availability = productMap[product.id].availability
+        }
+      });
+      setFunction(newProducts);
+    }
+
+
     const updateProductAvailability = (products, manufacturers, setFunction) => {
 
-      var productMap = productListToMap(products);
+      const { shirts, jackets, accessories } = products;
+
+      var shirtMap = productListToMap(shirts);
+      var jacketMap = productListToMap(jackets);
+      var accessoryMap = productListToMap(accessories);
 
       manufacturers.forEach(manufacturer => {
         axios
@@ -120,7 +135,7 @@ const App = (props) => {
             var values = response.data.response;
 
             // Don't process the response if it is empty
-            if (values === undefined || values.length === 0) {
+            if (values === undefined || values.length === 0) {
               setLoadingCounter(prev => prev + 1)
               return;
             }
@@ -129,19 +144,21 @@ const App = (props) => {
               const id = value.id.toLowerCase();
               const payload = prepareAvailibilityPayload(value.DATAPAYLOAD);
 
-              if (productMap[id]) {
-                productMap[id].availability = payload;
+              if (shirtMap[id]) {
+                shirtMap[id].availability = payload;
+              }
+              if (jacketMap[id]) {
+                jacketMap[id].availability = payload;
+              }
+              if (accessoryMap[id]) {
+                accessoryMap[id].availability = payload;
               }
             })
 
-            let newProducts = [...products];
-            newProducts.forEach(product => {
-              if (productMap[product.id].availability !== '[Waiting for update]') {
-                product.availability = productMap[product.id].availability
-              }
-            });
+            updateProductState(shirtMap, shirts, setShirts);
+            updateProductState(jacketMap, jackets, setJackets);
+            updateProductState(accessoryMap, accessories, setAccessories);
 
-            setFunction(newProducts);
             setLoadingCounter(prev => prev + 1);
 
           }).catch(error => {
@@ -156,11 +173,9 @@ const App = (props) => {
       const manufacturers = getUniqueManufacturers(products);
       console.log(manufacturers);
 
-      setMaxLoadingCounter(manufacturers.length * 3);
+      setMaxLoadingCounter(manufacturers.length);
 
-      updateProductAvailability(shirts, manufacturers, setShirts);
-      updateProductAvailability(jackets, manufacturers, setJackets);
-      updateProductAvailability(accessories, manufacturers, setAccessories);
+      updateProductAvailability({ shirts, jackets, accessories }, manufacturers, setShirts);
     }
 
   }, [updateAvailability]);
