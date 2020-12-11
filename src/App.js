@@ -106,6 +106,16 @@ const App = (props) => {
         maxProgress: manufacturers.length,
       })
 
+      // Sometimes the response of the axios GET request is empty. This will prevent
+      // the system from properly setting the availability data, but the user can
+      // manually request an update for the data.
+      //
+      // The server API uses a CORSS setup and doesn't handle the pre-request OPTION
+      // call properly, and hence the axios GET requests will be executed twice. If the
+      // second request returns an empty response, the availability data will be null.
+      //
+      // As the API can't be changed, I just let it happen twice and allow the user
+      // to manually refresh the availibity data when needed.
       manufacturers.forEach(manufacturer => {
         axios
           .get(`https://bad-api-assignment.reaktor.com/availability/${manufacturer}`)
@@ -117,7 +127,7 @@ const App = (props) => {
               [shirtMap, jacketMap, accessoryMap].forEach(m => {
                 Object.keys(m).forEach(key => {
                   if (m[key].manufacturer === manufacturer) {
-                    m[key].availability = 'Failed to load the availibility data, please try again!'; // TODO: Requeue the loading of this manufacturer!
+                    m[key].availability = 'Failed to load the availibility data, please try again!';
                   }
                 });
               });
