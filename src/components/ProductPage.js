@@ -18,7 +18,7 @@ const ProductPage = ({ product }) => {
   }
 
   return (
-    <div>
+    <div className="product-page-container">
       <div className="product-id">ID: {id}</div>
       <div><b>Name: {name}</b></div>
       <div>Color: {colors}</div>

@@ -11,33 +11,22 @@ const App = (props) => {
   const [jackets, setJackets] = useState([]);
   const [accessories, setAccessories] = useState([]);
 
-  const [doneLoadingShirts, setDoneLoadingShirts] = useState(false);
-  const [doneLoadingJackets, setDoneLoadingJackets] = useState(false);
-  const [doneLoadingAccessories, setDoneLoadingAccessories] = useState(false);
-
-  const [updateAvailability, setUpdateAvailability] = useState(false);
-  const [doneLoading, setDoneLoading] = useState(false);
-
-  const [maxLoadingCounter, setMaxLoadingCounter] = useState(1);
-  const [loadingCounter, setLoadingCounter] = useState(0);
+  const [updateAvailability, setUpdateAvailability] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState({ progress: 0, maxProgress: 100 });
 
   const [currentTabIndex, setCurrentTabIndex] = useState(0);
 
 
   useEffect(() => {
 
-    const fetchProducts = (infoString, urlString, setProductsFunction, setDoneFunction) => {
-      console.log(infoString);
+    const fetchProducts = (urlString, setProductsFunction) => {
       axios
         .get(urlString, {
-          headers: {
-            'x-force-error-mode': 'all'
-          }
+          // headers: {
+          //   'x-force-error-mode': 'all'
+          // }
         })
         .then(response => {
-          console.log(`${infoString} promise fulfilled`);
-          console.log(response);
-
           var products = response.data;
           products = products.map(product => {
             return {
@@ -48,48 +37,29 @@ const App = (props) => {
           // const manufacturers = getUniqueManufacturers(products);
           // updateProductWithAvailability(products, manufacturers, setFunction)
           setProductsFunction(products);
-          setDoneFunction(true);
         }).catch(error => {
           console.log(error);
         });
     }
 
     fetchProducts(
-      'Fetching shirts',
       'https://bad-api-assignment.reaktor.com/products/shirts',
       setShirts,
-      setDoneLoadingShirts,
     )
 
     fetchProducts(
-      'Fetching jackets',
       'https://bad-api-assignment.reaktor.com/products/jackets',
       setJackets,
-      setDoneLoadingJackets,
     )
 
     fetchProducts(
-      'Fetching accessories',
       'https://bad-api-assignment.reaktor.com/products/accessories',
       setAccessories,
-      setDoneLoadingAccessories,
     )
-
-    // axios
-    //   .get('https://bad-api-assignment.reaktor.com/products/accessories', {
-    //     headers: {
-    //       'x-force-error-mode': 'all'
-    //     }
-    //   }).then(response => {
-    //     console.log("Axios with extra request header");
-    //     console.log(response);
-    //   }).catch(error => {
-    //     console.log("ERROR");
-    //   })
   }, [])
 
 
-  useEffect(() => {
+  const fetchAvailibilityData = () => {
 
     const getUniqueManufacturers = (products) => {
       return [...new Set(products.map(product => product.manufacturer))];
@@ -126,24 +96,23 @@ const App = (props) => {
 
       const { shirts, jackets, accessories } = products;
 
+      // Use maps to have fast access to the underling object
       var shirtMap = productListToMap(shirts);
       var jacketMap = productListToMap(jackets);
       var accessoryMap = productListToMap(accessories);
 
-      manufacturers.forEach(manufacturer => {
-        console.log(manufacturer);
-        axios
-          .get(`https://bad-api-assignment.reaktor.com/availability/${manufacturer}`, {
-            // headers: {
-            //   'x-force-error-mode': 'all'
-            // }
-          })
-          .then(response => {
-            console.log('get availability promise fulfilled', response);
+      setLoadingProgress({
+        progress: 0,
+        maxProgress: manufacturers.length,
+      })
 
+      manufacturers.forEach(manufacturer => {
+        axios
+          .get(`https://bad-api-assignment.reaktor.com/availability/${manufacturer}`)
+          .then(response => {
             var values = response.data.response;
 
-            // Don't process the response if it is empty
+            // Something went wrong if the response is empty.
             if (values === undefined || values.length === 0 || values === '[]') {
               [shirtMap, jacketMap, accessoryMap].forEach(m => {
                 Object.keys(m).forEach(key => {
@@ -169,52 +138,47 @@ const App = (props) => {
             updateProductState(jacketMap, jackets, setJackets);
             updateProductState(accessoryMap, accessories, setAccessories);
 
-            setLoadingCounter(prev => prev + 1);
+            setLoadingProgress(prev => ({
+              ...prev,
+              progress: prev.progress + 1,
+            }));
 
           }).catch(error => {
             console.log(error);
-          }).finally(() => {
-            console.log("Done: ", manufacturer);
           });
       });
     }
 
-    if (updateAvailability) {
-      console.log("Update availability")
-      const products = shirts.concat(jackets, accessories);
-      const manufacturers = getUniqueManufacturers(products);
-      console.log(manufacturers);
-
-      setMaxLoadingCounter(manufacturers.length);
-      updateProductAvailability({ shirts, jackets, accessories }, manufacturers);
-    }
-
-  }, [updateAvailability]);
+    // This should be run first after all the data sets have been loaded
+    const products = shirts.concat(jackets, accessories);
+    const manufacturers = getUniqueManufacturers(products);
+    updateProductAvailability({ shirts, jackets, accessories }, manufacturers);
+  };
 
 
-  // Check if the "updateProductAvailability" function has applied all the
-  // availability data to the products.
-  //    3 comes from the three calls to the function.
-  if (loadingCounter === maxLoadingCounter) {
-    setDoneLoading(true);
-    setLoadingCounter(0);
-    setMaxLoadingCounter(1);
-  }
-
-
-  // Synchronize the data loading to access the "availability API" just once
-  if (doneLoadingShirts && doneLoadingJackets && doneLoadingAccessories && !updateAvailability) {
-    setUpdateAvailability(true);
+  // Synchronize the data loading to access the "availability API" only one time.
+  if (updateAvailability) {
+    var doneFetchingAll = true;
+    [shirts, jackets, accessories].forEach(products => {
+      doneFetchingAll = doneFetchingAll && (products.length > 0);
+    });
+    if (doneFetchingAll) {
+      setUpdateAvailability(false);
+      fetchAvailibilityData();
+    };
   }
 
 
   const renderTabs = () => {
-    if (currentTabIndex === 0) {
-      return <ProductListPage titleText="Shirt list page" products={shirts} />
-    } else if (currentTabIndex === 1) {
-      return <ProductListPage titleText="Jacket list page" products={jackets} />
-    } else {
-      return <ProductListPage titleText="Accessory list page" products={accessories} />
+    switch (currentTabIndex) {
+      case 0:
+        return <ProductListPage titleText="Shirt list page" products={shirts} />
+      case 1:
+        return <ProductListPage titleText="Jacket list page" products={jackets} />
+      case 2:
+        return <ProductListPage titleText="Accessory list page" products={accessories} />
+      default:
+        return null;
     }
   }
 
@@ -223,21 +187,22 @@ const App = (props) => {
       <header className="App-header">
         Software for accessing product and availability info.
         <div>
-          {(doneLoadingShirts) ? "Shirts loaded" : "Loading shirts"}
+          {(shirts.length > 0) ? "Shirts loaded" : "Loading shirts"}
         </div>
         <div>
-          {(doneLoadingJackets) ? "Jackets loaded" : "Loading jackets"}
+          {(jackets.length > 0) ? "Jackets loaded" : "Loading jackets"}
         </div>
         <div>
-          {(doneLoadingAccessories) ? "Accessories loaded" : "Loading accessories"}
+          {(accessories.length > 0) ? "Accessories loaded" : "Loading accessories"}
         </div>
         <div>
-          {(doneLoading) ? "Everything loaded" : `Loading availability data: ${loadingCounter / maxLoadingCounter * 100} %`}
+          {(loadingProgress.progress >= loadingProgress.maxProgress) ? "Everything loaded" : `Loading availability data: ${loadingProgress.progress / loadingProgress.maxProgress * 100} %`}
         </div>
         <div>
           <button onClick={() => { setCurrentTabIndex(0) }}>Shirts</button>
           <button onClick={() => { setCurrentTabIndex(1) }}>Jackets</button>
           <button onClick={() => { setCurrentTabIndex(2) }}>Accessories</button>
+          <button onClick={() => { setUpdateAvailability(true) }}>Reload Availability</button>
         </div>
       </header>
       <div>

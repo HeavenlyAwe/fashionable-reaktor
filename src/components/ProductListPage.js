@@ -18,7 +18,7 @@ const ProductListPage = ({ titleText, products }) => {
 
   const productList = currentPageData.map(product => {
     return (
-      <div className=".product-page-container"
+      <div
         key={product.id}
       >
         <ProductPage product={product} />
@@ -26,19 +26,6 @@ const ProductListPage = ({ titleText, products }) => {
     )
   })
 
-
-  // return (
-  //   <div>
-  //     <h2>{titleText}</h2>
-  //     {
-  //       (productList.length === 0)
-  //         ? 'Content coming soon'
-  //         : <ul style={{ listStyleType: "none" }}>
-  //           {productList}
-  //         </ul>
-  //     }
-  //   </div>
-  // )
 
   const handlePageClick = ({selected: selectedPage}) => {
     setCurrentPage(selectedPage);
