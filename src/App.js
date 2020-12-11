@@ -120,7 +120,8 @@ const App = (props) => {
             var values = response.data.response;
 
             // Don't process the response if it is empty
-            if (values.length === 0) {
+            if (values === undefined || values.length === 0) {
+              setLoadingCounter(prev => prev + 1)
               return;
             }
 
@@ -141,7 +142,7 @@ const App = (props) => {
             });
 
             setFunction(newProducts);
-            setLoadingCounter(prev => prev += 1);
+            setLoadingCounter(prev => prev + 1);
 
           }).catch(error => {
             console.log(error);
